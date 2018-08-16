@@ -1,50 +1,31 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# vim: ai ts=4 sts=4 et sw=4 nu
 
-'''
-Gauge
-=====
-
-The :class:`Gauge` widget is a widget for displaying gauges.
-
-.. note::
-
-Source svg file provided for customing.
-
-'''
-
-__version__ = '0.2'
-__author__ = 'julien@hautefeuille.eu, tcaron@umanit.fr'
+from gauges.generic import GaugeWidget
 
 import kivy
 
-kivy.require('1.7.1')
-
-from kivy.properties import NumericProperty
 from kivy.properties import StringProperty
 from kivy.properties import BoundedNumericProperty
-from kivy.uix.widget import Widget
 from kivy.uix.scatter import Scatter
 from kivy.uix.image import Image
 
+kivy.require('1.7.1')
 
-class AltitudeWidget(Widget):
-    '''
-    AirspeedWidget class
 
-    '''
+class AltitudeWidget(GaugeWidget):
 
+    data_ref = ''
     unit_per_revolution = 1000
     value = BoundedNumericProperty(0, min=0, max=100000, errorvalue=-1)
     file_gauge = StringProperty("gauges/assets/altitude_gear.png")
     file_needle = StringProperty("gauges/assets/altitude_dial_100.png")
     file_needle1k = StringProperty("gauges/assets/altitude_dial_1000.png")
     file_needle10k = StringProperty("gauges/assets/altitude_dial_10000.png")
-    size_gauge = NumericProperty(300)
 
     def __init__(self, **kwargs):
-        super().__init__()
+
+        super().__init__(**kwargs)
 
         self._gauge = Scatter(
             size=(self.size_gauge, self.size_gauge),
@@ -97,10 +78,6 @@ class AltitudeWidget(Widget):
         self.bind(value=self._turn)
 
     def _update(self, *args):
-        '''
-        Update gauges and needle positions after sizing or positioning.
-
-        '''
         self._gauge.pos = self.pos
 
         self._needle.pos = (self.x, self.y)
@@ -116,10 +93,6 @@ class AltitudeWidget(Widget):
         self._img_gauge.width = self.size_gauge
 
     def _turn(self, *args):
-        '''
-        Turn needle, 1 degree = 1 unit, 0 degree point start on 50 value.
-
-        '''
         self._needle.center_x = self._gauge.center_x
         self._needle1k.center_x = self._gauge.center_x
         self._needle10k.center_x = self._gauge.center_x
@@ -128,7 +101,7 @@ class AltitudeWidget(Widget):
         self._needle1k.center_y = self._gauge.center_y
         self._needle10k.center_y = self._gauge.center_y
 
-        unit = 360/self.unit_per_revolution
+        unit = 360 / self.unit_per_revolution
         self._needle.rotation = unit - (self.value * unit)
-        self._needle1k.rotation = unit - (self.value/10 * unit)
-        self._needle10k.rotation = unit - (self.value/100 * unit)
+        self._needle1k.rotation = unit - (self.value / 10 * unit)
+        self._needle10k.rotation = unit - (self.value / 100 * unit)
