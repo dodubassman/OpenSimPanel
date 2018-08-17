@@ -1,27 +1,29 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from kivy.uix.widget import Widget
 
 from gauges.generic import GaugeWidget
 
 import kivy
 
-from kivy.properties import StringProperty
+from kivy.properties import StringProperty, NumericProperty
 from kivy.properties import BoundedNumericProperty
 from kivy.uix.scatter import Scatter
 from kivy.uix.image import Image
 
-kivy.require('1.7.1')
+kivy.require('1.10.1')
 
 
-class AltitudeWidget(GaugeWidget):
+class AltitudeWidget(Widget):
 
     data_ref = ''
     unit_per_revolution = 1000
-    value = BoundedNumericProperty(0, min=0, max=100000, errorvalue=-1)
+    value = BoundedNumericProperty(0, min=-1000, max=100000, errorvalue=-9999)
     file_gauge = StringProperty("gauges/assets/altitude_gear.png")
     file_needle = StringProperty("gauges/assets/altitude_dial_100.png")
     file_needle1k = StringProperty("gauges/assets/altitude_dial_1000.png")
     file_needle10k = StringProperty("gauges/assets/altitude_dial_10000.png")
+    size_gauge = NumericProperty(300)
 
     def __init__(self, **kwargs):
 

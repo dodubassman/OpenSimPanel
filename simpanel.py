@@ -1,5 +1,8 @@
+from functools import partial
+
 import kivy
 from kivy import Config
+from kivy.animation import Animation
 from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.uix.scatter import Scatter
@@ -7,7 +10,7 @@ from kivy.uix.widget import Widget
 from kivy.app import App
 from configparser import NoSectionError
 
-from xplaneudp import XPlaneUdp, XPlaneTimeout
+from xplaneudp import XPlaneUdp, XPlaneTimeout, XPlaneIpNotFound
 
 kivy.require('1.10.1')
 
@@ -16,6 +19,8 @@ kivy.require('1.10.1')
 class SimPanel(Widget):
     # Xplane Instance
     xplane = None
+    data_refs = []
+    panel_gauges = None
 
     def __init__(self, **kwargs):
         super(SimPanel, self).__init__(**kwargs)
@@ -23,26 +28,54 @@ class SimPanel(Widget):
         self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
         # Bind keyboard
         self._keyboard.bind(on_key_down=self._on_keyboard_down)
-        # Try to connect XPlane every 2 seconds
-        Clock.schedule_interval(self._connect_xplane, 2)
+
+        # Try to connect XPlane every 3 seconds
+        Clock.schedule_interval(self._connect_xplane, 3)
+
+        # Set children
+        self.panel_gauges = self._get_scale_box().children
+
+        # get initials DataRefs
+        for instr in self.panel_gauges:
+            self.data_refs.append(instr.data_ref)
 
     # XPlane scheduled network connection
     def _connect_xplane(self, dt):
-        print('Waiting X-Plane to connect...')
         self.xplane = XPlaneUdp()
-        beacon = None
         try:
-            beacon = self.xplane.FindIp()
-            print('X-Plane connected!')
+            self.xplane.find_ip()
+
+            # XPlane Connected : add datarefs
+            for data_ref in self.data_refs:
+                self.xplane.add_dataref(data_ref)
+
+            # Schedule refresh of gauges
+            Clock.schedule_interval(self._refresh_gauges, 1.5)
+
             # No more callbacks : return false
             return False
+        except XPlaneIpNotFound:
+            # X-Plane unreachable... Trying again...
+            pass
         except XPlaneTimeout:
             # X-Plane unreachable... Trying again...
             pass
 
-    #        for instr in self._get_scale_box().children:
-    #            print(instr.data_ref)
-    #            self.xplane.AddDataRef(instr.data_ref, freq=10)
+    def _refresh_gauges(self, dt):
+        try:
+            values = self.xplane.get_values()
+            for gauge in self.panel_gauges:
+                for data_ref in values:
+                    if gauge.data_ref == data_ref:
+                        Clock.schedule_once(partial(self._animate_gauge, gauge, values[data_ref]))
+
+        except XPlaneTimeout:
+            # X-Plane Timeout... Trying again...
+            pass
+
+    def _animate_gauge(self, gauge, value, dt):
+        Animation.cancel_all(gauge)
+        Animation(value=value, duration=3, t='linear', step=1/32).start(gauge)
 
     def _keyboard_closed(self):
         self._keyboard.unbind(on_key_down=self._on_keyboard_down)
@@ -77,7 +110,7 @@ class SimPanel(Widget):
         if type(sim_scale_box).__name__ == 'SimScaleBox':
             return sim_scale_box
 
-    def _move_scale_box(self, side):
+    def _move_scale_box(self, side, *largs):
         sim_scale_box = self._get_scale_box()
         if side == 'right':
             sim_scale_box.pos = (sim_scale_box.pos[0] + 1, sim_scale_box.pos[1])
@@ -132,7 +165,7 @@ except NoSectionError:
     Config.write()
     pass
 
-# Window.fullscreen = 'auto'
+#Window.fullscreen = 'auto'
 
 app = SimPanelApp()
 app.run()

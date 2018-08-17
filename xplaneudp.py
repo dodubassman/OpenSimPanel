@@ -16,10 +16,10 @@ class XPlaneTimeout(Exception):
 
 
 class XPlaneUdp:
-    '''
+    """
     Get data from XPlane via network.
     Use a class to implement RAI Pattern for the UDP socket.
-    '''
+    """
 
     # constants
     UDP_PORT = 49000
@@ -34,21 +34,21 @@ class XPlaneUdp:
         self.datarefidx = 0
         self.datarefs = {}  # key = idx, value = dataref
         # values from xplane
-        self.BeaconData = {}
-        self.xplaneValues = {}
+        self.beacon_data = {}
+        self.xplane_values = {}
         self.defaultFreq = 1
 
     def __del__(self):
         for i in range(len(self.datarefs)):
-            self.AddDataRef(next(iter(self.datarefs.values())), freq=0)
+            self.add_dataref(next(iter(self.datarefs.values())), freq=0)
         self.socket.close()
 
-    def AddDataRef(self, dataref, freq=None):
+    def add_dataref(self, dataref, freq=None):
 
-        '''
+        """
         Configure XPlane to send the dataref with a certain frequency.
         You can disable a dataref by setting freq to 0.
-        '''
+        """
 
         idx = -9999
 
@@ -58,8 +58,8 @@ class XPlaneUdp:
         if dataref in self.datarefs.values():
             idx = list(self.datarefs.keys())[list(self.datarefs.values()).index(dataref)]
             if freq == 0:
-                if dataref in self.xplaneValues.keys():
-                    del self.xplaneValues[dataref]
+                if dataref in self.xplane_values.keys():
+                    del self.xplane_values[dataref]
                 del self.datarefs[idx]
         else:
             idx = self.datarefidx
@@ -70,9 +70,9 @@ class XPlaneUdp:
         string = dataref.encode()
         message = struct.pack("<5sii400s", cmd, freq, idx, string)
         assert (len(message) == 413)
-        self.socket.sendto(message, (self.BeaconData["IP"], self.UDP_PORT))
+        self.socket.sendto(message, (self.beacon_data["IP"], self.UDP_PORT))
 
-    def GetValues(self):
+    def get_values(self):
         try:
             # Receive packet
             data, addr = self.socket.recvfrom(1024)  # buffer size is 1024 bytes
@@ -96,19 +96,20 @@ class XPlaneUdp:
                         if value < 0.0 and value > -0.001:
                             value = 0.0
                         retvalues[self.datarefs[idx]] = value
-            self.xplaneValues.update(retvalues)
-        except:
+            self.xplane_values.update(retvalues)
+        except socket.timeout:
             raise XPlaneTimeout
-        return self.xplaneValues
 
-    def FindIp(self):
+        return self.xplane_values
 
-        '''
+    def find_ip(self):
+
+        """
         Find the IP of XPlane Host in Network.
         It takes the first one it can find.
-        '''
+        """
 
-        self.BeaconData = {}
+        self.beacon_data = {}
 
         # open socket for multicast group.
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
@@ -118,7 +119,7 @@ class XPlaneUdp:
         sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
         sock.settimeout(3.0)
 
-        while not self.BeaconData:
+        while not self.beacon_data:
 
             # receive data
             try:
@@ -164,17 +165,17 @@ class XPlaneUdp:
                     if beacon_major_version == 1 \
                             and beacon_minor_version == 1 \
                             and application_host_id == 1:
-                        self.BeaconData["IP"] = sender[0]
-                        self.BeaconData["Port"] = port
-                        self.BeaconData["hostname"] = computer_name.decode()
-                        self.BeaconData["XPlaneVersion"] = xplane_version_number
-                        self.BeaconData["role"] = role
+                        self.beacon_data["IP"] = sender[0]
+                        self.beacon_data["Port"] = port
+                        self.beacon_data["hostname"] = computer_name.decode()
+                        self.beacon_data["XPlaneVersion"] = xplane_version_number
+                        self.beacon_data["role"] = role
 
             except socket.timeout:
                 raise XPlaneIpNotFound()
 
         sock.close()
-        return self.BeaconData
+        return self.beacon_data
 
 
 # Example how to use:
@@ -184,16 +185,16 @@ if __name__ == '__main__':
     xp = XPlaneUdp()
 
     try:
-        beacon = xp.FindIp()
+        beacon = xp.find_ip()
         print(beacon)
         print()
 
-        xp.AddDataRef("sim/flightmodel/position/indicated_airspeed", freq=1)
-        xp.AddDataRef("sim/flightmodel/position/latitude")
+        xp.add_dataref("sim/cockpit2/gauges/indicators/heading_vacuum_deg_mag_pilot", freq=1)
+        xp.add_dataref("sim/cockpit2/gauges/indicators/altitude_ft_pilot")
 
         while True:
             try:
-                values = xp.GetValues()
+                values = xp.get_values()
                 print(values)
             except XPlaneTimeout:
                 print("XPlane Timeout")
