@@ -18,6 +18,7 @@ class AltitudeWidget(Widget):
 
     data_ref = ''
     unit_per_revolution = 1000
+    start_angle = 0
     value = BoundedNumericProperty(0, min=-1000, max=100000, errorvalue=-9999)
     file_gauge = StringProperty("gauges/assets/altitude_gear.png")
     file_needle = StringProperty("gauges/assets/altitude_dial_100.png")

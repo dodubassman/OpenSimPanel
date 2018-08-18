@@ -2,12 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-Gauge
-=====
-The :class:`GaugeWidget` is a widget for displaying gauges.
-
+CompassWidget
 """
-from kivy.animation import Animation
 
 __version__ = '0.2'
 __author__ = 'julien@hautefeuille.eu, dodubassman@gmail.com'
@@ -24,7 +20,7 @@ from kivy.uix.image import Image
 kivy.require('1.10.1')
 
 
-class GaugeWidget(Widget):
+class CompassWidget(Widget):
     # X-plane DataRef
     data_ref = ''
 
@@ -35,14 +31,14 @@ class GaugeWidget(Widget):
     start_angle = 0
 
     # Rotation direction 1: clockwise, -1 counter-clockwise
-    rotation_direction = BoundedNumericProperty(1, min=-1, max=1, errorvalue=0)
+    rotation_direction = BoundedNumericProperty(-1, min=-1, max=1, errorvalue=0)
 
     # gauge value
     value = BoundedNumericProperty(0, min=0, max=10000, errorvalue=-99999)
 
     # image files
-    file_gauge = StringProperty("gauges/assets/speed.png")
-    file_needle = StringProperty("gauges/assets/speed-dial.png")
+    file_gauge = StringProperty("gauges/assets/dg_gear.png")
+    file_needle = StringProperty("gauges/assets/dg_disc.png")
 
     # Gauge width in pixels
     size_gauge = NumericProperty(300)
@@ -71,8 +67,8 @@ class GaugeWidget(Widget):
         self._gauge.add_widget(self._img_gauge)
         self._needle.add_widget(_img_needle)
 
-        self.add_widget(self._gauge)
         self.add_widget(self._needle)
+        self.add_widget(self._gauge)
 
         self.bind(pos=self._update)
         self.bind(size_gauge=self._update)

@@ -24,8 +24,10 @@ class SimPanel(Widget):
 
     def __init__(self, **kwargs):
         super(SimPanel, self).__init__(**kwargs)
+
         # Keyboard aware widget
         self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
+
         # Bind keyboard
         self._keyboard.bind(on_key_down=self._on_keyboard_down)
 
@@ -35,24 +37,25 @@ class SimPanel(Widget):
         # Set children
         self.panel_gauges = self._get_scale_box().children
 
-        # get initials DataRefs
+        # Get initials DataRefs
         for instr in self.panel_gauges:
             self.data_refs.append(instr.data_ref)
 
-    # XPlane scheduled network connection
+    # Scheduled: XPlane network connection
     def _connect_xplane(self, dt):
         self.xplane = XPlaneUdp()
         try:
             self.xplane.find_ip()
 
-            # XPlane Connected : add datarefs
+            # XPlane Connected: add datarefs
             for data_ref in self.data_refs:
                 self.xplane.add_dataref(data_ref)
 
-            # Schedule refresh of gauges
+            # Schedule refresh of gauges every 1500ms
+            # todo timestamp avant et après.
             Clock.schedule_interval(self._refresh_gauges, 1.5)
 
-            # No more callbacks : return false
+            # No more callbacks: return false
             return False
         except XPlaneIpNotFound:
             # X-Plane unreachable... Trying again...
@@ -61,12 +64,15 @@ class SimPanel(Widget):
             # X-Plane unreachable... Trying again...
             pass
 
+    # Scheduled: Gauges refreshment
     def _refresh_gauges(self, dt):
         try:
             values = self.xplane.get_values()
+            print(values)
             for gauge in self.panel_gauges:
                 for data_ref in values:
                     if gauge.data_ref == data_ref:
+                        # Scheduled to free the main app loop
                         Clock.schedule_once(partial(self._animate_gauge, gauge, values[data_ref]))
 
         except XPlaneTimeout:
@@ -75,7 +81,7 @@ class SimPanel(Widget):
 
     def _animate_gauge(self, gauge, value, dt):
         Animation.cancel_all(gauge)
-        Animation(value=value, duration=3, t='linear', step=1/32).start(gauge)
+        Animation(value=value, duration=3, t='linear', step=1/30).start(gauge)
 
     def _keyboard_closed(self):
         self._keyboard.unbind(on_key_down=self._on_keyboard_down)
@@ -84,7 +90,7 @@ class SimPanel(Widget):
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
         if keycode[1] == '+':
             self._resize_scale_box(keycode[1])
-        elif keycode[1] == '=':  # Troubleshooting on MacOs
+        elif keycode[1] == '=':  # Troubleshooting on MacOs keyboard
             self._resize_scale_box('+')
         elif keycode[1] == '-':
             self._resize_scale_box(keycode[1])
@@ -106,11 +112,11 @@ class SimPanel(Widget):
 
     def _get_scale_box(self):
         sim_scale_box = self.children[0]
-        # Verifying we're on the good object
+        # check we're on the good object
         if type(sim_scale_box).__name__ == 'SimScaleBox':
             return sim_scale_box
 
-    def _move_scale_box(self, side, *largs):
+    def _move_scale_box(self, side):
         sim_scale_box = self._get_scale_box()
         if side == 'right':
             sim_scale_box.pos = (sim_scale_box.pos[0] + 1, sim_scale_box.pos[1])
@@ -128,7 +134,7 @@ class SimPanel(Widget):
         else:  # '-'
             sim_scale_box.scale = sim_scale_box.scale - .01
 
-    #  Save config to local simpanel.ini
+    # Save config to local simpanel.ini
     def _save_configuration(self):
         sim_scale_box = self._get_scale_box()
         Config.read('simpanel.ini')
@@ -142,18 +148,22 @@ class SimPanel(Widget):
 class SimScaleBox(Scatter):
     def __init__(self, **kwargs):
         super(SimScaleBox, self).__init__(**kwargs)
+
         # set pre-saved data
         self.scale = eval(Config.get('simpanel', 'scale'))
         self.pos = (eval(Config.get('simpanel', 'posX')), eval(Config.get('simpanel', 'posY')))
 
 
-# Sim App
 class SimPanelApp(App):
+    """
+    SimPanel app.
+    Mapped to simpanel.kv
+    """
     def build(self):
         return SimPanel()
 
 
-#  Create config file at first use
+# Create config file at first use
 Config.read('simpanel.ini')
 try:
     Config.get('simpanel', 'posX')
@@ -165,6 +175,7 @@ except NoSectionError:
     Config.write()
     pass
 
+# WIP : commented for test reasons
 #Window.fullscreen = 'auto'
 
 app = SimPanelApp()

@@ -1,5 +1,6 @@
 #:import AltitudeWidget gauges.altitude
 #:import GaugeWidget gauges.generic
+#:import CompassWidget gauges.compass
 
 SimPanel:
     SimScaleBox:
@@ -13,10 +14,16 @@ SimPanel:
 
         AltitudeWidget:
             data_ref: 'sim/cockpit2/gauges/indicators/altitude_ft_pilot'
-            value: 1000
+            value: 0
             pos: 0, 400
 
-        GaugeWidget:
+#        GaugeWidget:
+#            data_ref: 'sim/cockpit2/gauges/indicators/heading_vacuum_deg_mag_pilot'
+#            value: 0
+#            rotation_direction: -1
+#            pos: 0, 400
+
+        CompassWidget:
             data_ref: 'sim/cockpit2/gauges/indicators/heading_vacuum_deg_mag_pilot'
-            value: 1300
+            value: 0
             pos: 400, 400
