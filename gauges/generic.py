@@ -24,21 +24,21 @@ from kivy.uix.image import Image
 kivy.require('1.10.1')
 
 
-class GaugeWidget(Widget):
+class GenericWidget(Widget):
     # X-plane DataRef
     data_ref = ''
 
     # Number of units for a full rotation of the gauge
     units_per_revolution = 360
 
-    # Start angle in deg 0: needle is à noon, 45: 3 o'clock, 90: 6 o'clock etc...
+    # Start angle in deg 0: needle is à noon, 90: 3 o'clock, 180: 6 o'clock etc...
     start_angle = 0
 
     # Rotation direction 1: clockwise, -1 counter-clockwise
     rotation_direction = BoundedNumericProperty(1, min=-1, max=1, errorvalue=0)
 
     # gauge value
-    value = BoundedNumericProperty(0, min=0, max=10000, errorvalue=-99999)
+    value = BoundedNumericProperty(0, min=-10000, max=10000, errorvalue=-99999)
 
     # image files
     file_gauge = StringProperty("gauges/assets/speed.png")
@@ -78,6 +78,9 @@ class GaugeWidget(Widget):
         self.bind(size_gauge=self._update)
         self.bind(value=self._turn)
 
+        # set first value
+        self._turn()
+
     def _update(self, *args):
         """
         Update gauges and needle positions after sizing or positioning.
@@ -97,6 +100,10 @@ class GaugeWidget(Widget):
 
         #  Set rotation unit depending of gauge actual unit
         unit = 360 / self.units_per_revolution
+
+        # Set start angle offset
+        offset = self.start_angle / 360 * self.units_per_revolution
+
         self._needle.center_x = self._gauge.center_x
         self._needle.center_y = self._gauge.center_y
-        self._needle.rotation = unit - (self.value * unit * self.rotation_direction)
+        self._needle.rotation = unit - (self.value * unit * self.rotation_direction) - offset

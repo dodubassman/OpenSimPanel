@@ -1,29 +1,34 @@
+#:kivy 1.10.1
+
 #:import AltitudeWidget gauges.altitude
-#:import GaugeWidget gauges.generic
+#:import GenericWidget gauges.generic
 #:import CompassWidget gauges.compass
 
-SimPanel:
-    SimScaleBox:
+<VerticalSpeed@GenericWidget>:
+    file_gauge: 'gauges/assets/verticalspeed.png'
+    units_per_revolution: 4200
+    start_angle: 270
+    value: 0
 
-<SimScaleBox>:
-    id: scale_box
+<AirSpeed@GenericWidget>:
+    units_per_revolutions: 250
 
 <SimPanel>:
-
     SimScaleBox:
+
+        AirSpeed:
+            pos: 0, 400
 
         AltitudeWidget:
             data_ref: 'sim/cockpit2/gauges/indicators/altitude_ft_pilot'
-            value: 0
-            pos: 0, 400
-
-#        GaugeWidget:
-#            data_ref: 'sim/cockpit2/gauges/indicators/heading_vacuum_deg_mag_pilot'
-#            value: 0
-#            rotation_direction: -1
-#            pos: 0, 400
+            pos: 800, 400
 
         CompassWidget:
             data_ref: 'sim/cockpit2/gauges/indicators/heading_vacuum_deg_mag_pilot'
-            value: 0
-            pos: 400, 400
+            pos: 400, 0
+
+        VerticalSpeed:
+            data_ref: 'sim/flightmodel/position/vh_ind_fpm'
+            pos: 800, 0
+
+

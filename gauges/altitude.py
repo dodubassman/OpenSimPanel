@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 from kivy.uix.widget import Widget
 
-from gauges.generic import GaugeWidget
-
 import kivy
 
 from kivy.properties import StringProperty, NumericProperty
@@ -17,7 +15,7 @@ kivy.require('1.10.1')
 class AltitudeWidget(Widget):
 
     data_ref = ''
-    unit_per_revolution = 1000
+    units_per_revolution = 1000
     start_angle = 0
     value = BoundedNumericProperty(0, min=-1000, max=100000, errorvalue=-9999)
     file_gauge = StringProperty("gauges/assets/altitude_gear.png")
@@ -104,7 +102,7 @@ class AltitudeWidget(Widget):
         self._needle1k.center_y = self._gauge.center_y
         self._needle10k.center_y = self._gauge.center_y
 
-        unit = 360 / self.unit_per_revolution
+        unit = 360 / self.units_per_revolution
         self._needle.rotation = unit - (self.value * unit)
         self._needle1k.rotation = unit - (self.value / 10 * unit)
         self._needle10k.rotation = unit - (self.value / 100 * unit)
