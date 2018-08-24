@@ -3,7 +3,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.scatter import Scatter
 from kivy.uix.slider import Slider
 
-from gauges.altitude import AltitudeWidget
+from opensimpanel.gauges.altitude import AltitudeWidget
 from kivy.app import App
 
 kivy.require('1.10.1')

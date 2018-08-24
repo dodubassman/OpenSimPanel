@@ -6,13 +6,7 @@ import socket
 import struct
 import binascii
 
-
-class XPlaneIpNotFound(Exception):
-    args = "Could not find any running XPlane instance in network."
-
-
-class XPlaneTimeout(Exception):
-    args = "XPlane timeout."
+from opensimpanel.exceptions import XPlaneTimeout, XPlaneIpNotFound
 
 
 class XPlaneUdp:
@@ -58,8 +52,7 @@ class XPlaneUdp:
         if dataref in self.datarefs.values():
             idx = list(self.datarefs.keys())[list(self.datarefs.values()).index(dataref)]
             if freq == 0:
-                if dataref in self.xplane_values.keys():
-                    del self.xplane_values[dataref]
+                self.xplane_values.pop(dataref, None)
                 del self.datarefs[idx]
         else:
             idx = self.datarefidx
@@ -195,7 +188,6 @@ if __name__ == '__main__':
         while True:
             try:
                 values = xp.get_values()
-                print(values)
             except XPlaneTimeout:
                 print("XPlane Timeout")
 

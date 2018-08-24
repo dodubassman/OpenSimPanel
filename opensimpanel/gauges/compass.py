@@ -4,6 +4,7 @@
 """
 CompassWidget
 """
+from kivy.animation import Animation
 
 __version__ = '0.2'
 __author__ = 'julien@hautefeuille.eu, dodubassman@gmail.com'
@@ -43,8 +44,10 @@ class CompassWidget(Widget):
     # Gauge width in pixels
     size_gauge = NumericProperty(300)
 
+    __last_value = 0
+
     def __init__(self, **kwargs):
-        super().__init__()
+        super().__init__(**kwargs)
 
         self._gauge = Scatter(
             size=(self.size_gauge, self.size_gauge),
@@ -74,6 +77,10 @@ class CompassWidget(Widget):
         self.bind(size_gauge=self._update)
         self.bind(value=self._turn)
 
+    def animate(self, data):
+        Animation.cancel_all(self)
+        Animation(value=data[self.data_ref], duration=3, t='linear', step=1/30).start(self)
+
     def _update(self, *args):
         """
         Update gauges and needle positions after sizing or positioning.
@@ -91,8 +98,20 @@ class CompassWidget(Widget):
 
         """
 
+        delta = self.value - self.__last_value
+
+        # Delta gt 180, we've move from NE to NW ie from < 090 to > 270 and
+        # we don't want the compass to make a whole turn
+        if delta > 0 and delta > 180:
+            delta = self.value - 360
+
+
         #  Set rotation unit depending of gauge actual unit
         unit = 360 / self.units_per_revolution
+
         self._needle.center_x = self._gauge.center_x
         self._needle.center_y = self._gauge.center_y
-        self._needle.rotation = unit - (self.value * unit * self.rotation_direction)
+        self._needle.rotation = unit - ((self.value+delta) * unit * self.rotation_direction)
+
+        __last_value = self.value + delta
+

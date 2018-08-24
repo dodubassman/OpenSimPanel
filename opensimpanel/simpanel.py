@@ -2,7 +2,6 @@ from functools import partial
 
 import kivy
 from kivy import Config
-from kivy.animation import Animation
 from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.uix.scatter import Scatter
@@ -10,20 +9,17 @@ from kivy.uix.widget import Widget
 from kivy.app import App
 from configparser import NoSectionError
 
-from xplaneudp import XPlaneUdp, XPlaneTimeout, XPlaneIpNotFound
+from opensimpanel.xplaneudp import XPlaneUdp, XPlaneTimeout, XPlaneIpNotFound
 
 kivy.require('1.10.1')
 
 
-# Main container
 class SimPanel(Widget):
-    # Xplane Instance
-    xplane = None
-    data_refs = []
-    panel_gauges = None
 
     def __init__(self, **kwargs):
         super(SimPanel, self).__init__(**kwargs)
+
+        self.xplane = None
 
         # Keyboard aware widget
         self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
@@ -38,8 +34,9 @@ class SimPanel(Widget):
         self.panel_gauges = self._get_scale_box().children
 
         # Get initials DataRefs
-        for instr in self.panel_gauges:
-            self.data_refs.append(instr.data_ref)
+        # for instr in self.panel_gauges:
+        #    self.data_refs.append(instr.data_ref)
+        self.data_refs = [instr.data_ref for instr in self.panel_gauges]
 
     # Scheduled: XPlane network connection
     def _connect_xplane(self, dt):
@@ -68,20 +65,17 @@ class SimPanel(Widget):
     def _refresh_gauges(self, dt):
         try:
             values = self.xplane.get_values()
-            print(values)
             for gauge in self.panel_gauges:
-                for data_ref in values:
-                    if gauge.data_ref == data_ref:
-                        # Scheduled to free the main app loop
-                        Clock.schedule_once(partial(self._animate_gauge, gauge, values[data_ref]))
+                # Scheduled to free the main app loop
+                Clock.schedule_once(partial(self._animate_gauge, gauge, values))
 
         except XPlaneTimeout:
             # X-Plane Timeout... Trying again...
             pass
 
-    def _animate_gauge(self, gauge, value, dt):
-        Animation.cancel_all(gauge)
-        Animation(value=value, duration=3, t='linear', step=1/30).start(gauge)
+    def _animate_gauge(self, gauge, values, dt):
+        # todo get rid of this
+        gauge.animate(values)
 
     def _keyboard_closed(self):
         self._keyboard.unbind(on_key_down=self._on_keyboard_down)
@@ -159,6 +153,7 @@ class SimPanelApp(App):
     SimPanel app.
     Mapped to simpanel.kv
     """
+
     def build(self):
         return SimPanel()
 
@@ -174,9 +169,3 @@ except NoSectionError:
     Config.set('simpanel', 'scale', 1)
     Config.write()
     pass
-
-# WIP : commented for test reasons
-#Window.fullscreen = 'auto'
-
-app = SimPanelApp()
-app.run()

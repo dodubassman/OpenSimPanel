@@ -31,24 +31,28 @@ class GenericWidget(Widget):
     # Number of units for a full rotation of the gauge
     units_per_revolution = 360
 
-    # Start angle in deg 0: needle is à noon, 90: 3 o'clock, 180: 6 o'clock etc...
-    start_angle = 0
-
     # Rotation direction 1: clockwise, -1 counter-clockwise
     rotation_direction = BoundedNumericProperty(1, min=-1, max=1, errorvalue=0)
 
     # gauge value
     value = BoundedNumericProperty(0, min=-10000, max=10000, errorvalue=-99999)
 
-    # image files
-    file_gauge = StringProperty("gauges/assets/speed.png")
-    file_needle = StringProperty("gauges/assets/speed-dial.png")
-
     # Gauge width in pixels
     size_gauge = NumericProperty(300)
 
+    start_angle = 0
+
+    file_gauge = StringProperty("gauges/assets/speed.png")
+    file_needle = StringProperty("gauges/assets/speed-dial.png")
+
     def __init__(self, **kwargs):
-        super().__init__()
+        super().__init__(**kwargs)
+
+        # image files
+        #self.file_gauge = StringProperty("gauges/assets/speed.png")
+        #self.file_needle = StringProperty("gauges/assets/speed-dial.png")
+
+        print(self.data_ref)
 
         self._gauge = Scatter(
             size=(self.size_gauge, self.size_gauge),
@@ -81,6 +85,10 @@ class GenericWidget(Widget):
         # set first value
         self._turn()
 
+    def animate(self, data):
+        Animation.cancel_all(self)
+        Animation(value=data[self.data_ref], duration=3, t='linear', step=1 / 30).start(self)
+
     def _update(self, *args):
         """
         Update gauges and needle positions after sizing or positioning.
@@ -106,4 +114,12 @@ class GenericWidget(Widget):
 
         self._needle.center_x = self._gauge.center_x
         self._needle.center_y = self._gauge.center_y
+
         self._needle.rotation = unit - (self.value * unit * self.rotation_direction) - offset
+
+
+class Foo(GenericWidget):
+    STARTING_ANGLE = 360
+
+    def __init__(self):
+        super().__init__()

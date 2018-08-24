@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from kivy.animation import Animation
 from kivy.uix.widget import Widget
 
 import kivy
@@ -77,6 +78,10 @@ class AltitudeWidget(Widget):
         self.bind(pos=self._update)
         self.bind(size_gauge=self._update)
         self.bind(value=self._turn)
+
+    def animate(self, data):
+        Animation.cancel_all(self)
+        Animation(value=data[self.data_ref], duration=3, t='linear', step=1/30).start(self)
 
     def _update(self, *args):
         self._gauge.pos = self.pos
