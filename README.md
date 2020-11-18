@@ -1,6 +1,6 @@
 # OpenSimPanel
 
-> :warning: Not maintained anymore. This project has move to [QtSimPanel](https://github.com/dodubassman/QtSimPanel), a Qt C++ & QML project.
+> :warning: Not maintained anymore. This project has moved to [QtSimPanel](https://github.com/dodubassman/QtSimPanel), a Qt C++ & QML project.
 
 External instrument panels for X-Plane.
 
